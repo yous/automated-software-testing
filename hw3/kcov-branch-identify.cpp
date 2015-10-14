@@ -78,7 +78,7 @@ public:
         }
 
         SourceLocation startLocation = s->getLocStart();
-        if (startLocation.isMacroID()) {
+        while (startLocation.isMacroID()) {
             startLocation = sourceMgr.getImmediateMacroCallerLoc(startLocation);
         }
         unsigned int line = sourceMgr.getExpansionLineNumber(startLocation);
