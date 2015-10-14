@@ -33,7 +33,7 @@ public:
         // Fill out this function for your homework
         return true;
     }
-    
+
     bool VisitFunctionDecl(FunctionDecl *f) {
         // Fill out this function for your homework
         return true;
@@ -70,11 +70,11 @@ int main(int argc, char *argv[])
     // CompilerInstance will hold the instance of the Clang compiler for us,
     // managing the various objects needed to run the compiler.
     CompilerInstance TheCompInst;
-    
-    // Diagnostics manage problems and issues in compile 
+
+    // Diagnostics manage problems and issues in compile
     TheCompInst.createDiagnostics(NULL, false);
 
-    // Set target platform options 
+    // Set target platform options
     // Initialize target info with the default triple for our platform.
     TargetOptions *TO = new TargetOptions();
     TO->Triple = llvm::sys::getDefaultTargetTriple();
@@ -84,14 +84,14 @@ int main(int argc, char *argv[])
     // FileManager supports for file system lookup, file system caching, and directory search management.
     TheCompInst.createFileManager();
     FileManager &FileMgr = TheCompInst.getFileManager();
-    
+
     // SourceManager handles loading and caching of source files into memory.
     TheCompInst.createSourceManager(FileMgr);
     SourceManager &SourceMgr = TheCompInst.getSourceManager();
-    
+
     // Prreprocessor runs within a single source file
     TheCompInst.createPreprocessor();
-    
+
     // ASTContext holds long-lived AST nodes (such as types and decls) .
     TheCompInst.createASTContext();
 
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 
     // <Warning!!> -- Platform Specific Code lives here
     // This depends on A) that you're running linux and
-    // B) that you have the same GCC LIBs installed that I do. 
+    // B) that you have the same GCC LIBs installed that I do.
     /*
     $ gcc -xc -E -v -
     ..
@@ -120,14 +120,14 @@ int main(int argc, char *argv[])
                 "/usr/lib/gcc/x86_64-linux-gnu/4.4.5/include-fixed",
                 "/usr/include"};
 
-    for (int i=0; i<4; i++) 
-        hso->AddPath(include_paths[i], 
-                    clang::frontend::Angled, 
-                    false, 
+    for (int i=0; i<4; i++)
+        hso->AddPath(include_paths[i],
+                    clang::frontend::Angled,
+                    false,
                     false);
     // </Warning!!> -- End of Platform Specific Code
 
-    InitializePreprocessor(TheCompInst.getPreprocessor(), 
+    InitializePreprocessor(TheCompInst.getPreprocessor(),
                   TheCompInst.getPreprocessorOpts(),
                   *hso,
                   TheCompInst.getFrontendOpts());
@@ -140,10 +140,10 @@ int main(int argc, char *argv[])
     // Set the main file handled by the source manager to the input file.
     const FileEntry *FileIn = FileMgr.getFile(argv[1]);
     SourceMgr.createMainFileID(FileIn);
-    
-    // Inform Diagnostics that processing of a source file is beginning. 
+
+    // Inform Diagnostics that processing of a source file is beginning.
     TheCompInst.getDiagnosticClient().BeginSourceFile(TheCompInst.getLangOpts(),&TheCompInst.getPreprocessor());
-    
+
     // Create an AST consumer instance which is going to get called by ParseAST.
     MyASTConsumer TheConsumer;
 
