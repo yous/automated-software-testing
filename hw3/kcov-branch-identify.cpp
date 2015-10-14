@@ -33,15 +33,64 @@ static CompilerInstance TheCompInst;
 class MyASTVisitor : public RecursiveASTVisitor<MyASTVisitor>
 {
 public:
+    MyASTVisitor() {
+        BranchId = 0;
+    }
+
     bool VisitStmt(Stmt *s) {
-        // Fill out this function for your homework
+        SourceManager &sourceMgr = TheCompInst.getSourceManager();
+
+        if (isa<DoStmt>(s)) {
+            cout << "\tDo";
+        } else if (isa<ForStmt>(s)) {
+            cout << "\tFor";
+        } else if (isa<IfStmt>(s)) {
+            cout << "\tIf";
+        } else if (isa<SwitchStmt>(s)) {
+            SwitchStmt *switchStmt = cast<SwitchStmt>(s);
+            SwitchCase *switchCaseList = switchStmt->getSwitchCaseList();
+            while (switchCaseList != NULL) {
+                if (isa<DefaultStmt>(switchCaseList)) {
+                    return true;
+                }
+                switchCaseList = switchCaseList->getNextSwitchCase();
+            }
+            cout << "\tImpDef.";
+        } else if (isa<CaseStmt>(s)) {
+            cout << "\tCase";
+        } else if (isa<DefaultStmt>(s)) {
+            cout << "\tDefault";
+        } else if (isa<WhileStmt>(s)) {
+            cout << "\tWhile";
+        } else if (isa<AbstractConditionalOperator>(s)) {
+            cout << "\t?:";
+        } else {
+            return true;
+        }
+
+        SourceLocation startLocation = s->getLocStart();
+        if (startLocation.isMacroID()) {
+            startLocation = sourceMgr.getImmediateMacroCallerLoc(startLocation);
+        }
+        unsigned int line = sourceMgr.getExpansionLineNumber(startLocation);
+        unsigned int col = sourceMgr.getExpansionColumnNumber(startLocation);
+        string filename = sourceMgr.getFilename(startLocation).str();
+
+        cout << "\tID: " << BranchId++ << "\tLine: " << line
+            << "\t\tCol: " << col << "\t\tFilename: " << filename << endl;
+
         return true;
     }
 
     bool VisitFunctionDecl(FunctionDecl *f) {
-        // Fill out this function for your homework
+        if (f->hasBody()) {
+            cout << "function: " << f->getName().str() << endl;
+        }
         return true;
     }
+
+private:
+    unsigned int BranchId;
 };
 
 class MyASTConsumer : public ASTConsumer
