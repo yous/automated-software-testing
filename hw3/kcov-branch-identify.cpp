@@ -145,10 +145,12 @@ int main(int argc, char *argv[])
     // Initialize target info with the default triple for our platform.
     TargetOptions *TO = new TargetOptions();
     TO->Triple = llvm::sys::getDefaultTargetTriple();
-    TargetInfo *TI = TargetInfo::CreateTargetInfo(TheCompInst.getDiagnostics(), TO);
+    TargetInfo *TI = TargetInfo::CreateTargetInfo(
+            TheCompInst.getDiagnostics(), TO);
     TheCompInst.setTarget(TI);
 
-    // FileManager supports for file system lookup, file system caching, and directory search management.
+    // FileManager supports for file system lookup, file system caching,
+    // and directory search management.
     TheCompInst.createFileManager();
     FileManager &FileMgr = TheCompInst.getFileManager();
 
@@ -163,7 +165,8 @@ int main(int argc, char *argv[])
     TheCompInst.createASTContext();
 
     // Enable HeaderSearch option
-    llvm::IntrusiveRefCntPtr<clang::HeaderSearchOptions> hso( new HeaderSearchOptions());
+    llvm::IntrusiveRefCntPtr<clang::HeaderSearchOptions> hso(
+            new HeaderSearchOptions());
     HeaderSearch headerSearch(hso,
                               TheCompInst.getFileManager(),
                               TheCompInst.getDiagnostics(),
@@ -209,13 +212,15 @@ int main(int argc, char *argv[])
     SourceMgr.createMainFileID(FileIn);
 
     // Inform Diagnostics that processing of a source file is beginning.
-    TheCompInst.getDiagnosticClient().BeginSourceFile(TheCompInst.getLangOpts(),&TheCompInst.getPreprocessor());
+    TheCompInst.getDiagnosticClient().BeginSourceFile(
+            TheCompInst.getLangOpts(), &TheCompInst.getPreprocessor());
 
     // Create an AST consumer instance which is going to get called by ParseAST.
     MyASTConsumer TheConsumer;
 
     // Parse the file to AST, registering our consumer as the AST consumer.
-    ParseAST(TheCompInst.getPreprocessor(), &TheConsumer, TheCompInst.getASTContext());
+    ParseAST(TheCompInst.getPreprocessor(), &TheConsumer,
+            TheCompInst.getASTContext());
 
     cout << "Total number of branches: ";
     cout << TheConsumer.getASTVisitor().getBranchCount() << endl;
