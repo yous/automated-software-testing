@@ -35,6 +35,7 @@ class MyASTVisitor : public RecursiveASTVisitor<MyASTVisitor>
 public:
     MyASTVisitor() {
         BranchId = 0;
+        BranchCount = 0;
     }
 
     bool VisitStmt(Stmt *s) {
@@ -42,10 +43,13 @@ public:
 
         if (isa<DoStmt>(s)) {
             cout << "\tDo";
+            BranchCount += 2;
         } else if (isa<ForStmt>(s)) {
             cout << "\tFor";
+            BranchCount += 2;
         } else if (isa<IfStmt>(s)) {
             cout << "\tIf";
+            BranchCount += 2;
         } else if (isa<SwitchStmt>(s)) {
             SwitchStmt *switchStmt = cast<SwitchStmt>(s);
             SwitchCase *switchCaseList = switchStmt->getSwitchCaseList();
@@ -56,14 +60,19 @@ public:
                 switchCaseList = switchCaseList->getNextSwitchCase();
             }
             cout << "\tImpDef.";
+            BranchCount += 1;
         } else if (isa<CaseStmt>(s)) {
             cout << "\tCase";
+            BranchCount += 1;
         } else if (isa<DefaultStmt>(s)) {
             cout << "\tDefault";
+            BranchCount += 1;
         } else if (isa<WhileStmt>(s)) {
             cout << "\tWhile";
+            BranchCount += 2;
         } else if (isa<AbstractConditionalOperator>(s)) {
             cout << "\t?:";
+            BranchCount += 2;
         } else {
             return true;
         }
@@ -89,8 +98,13 @@ public:
         return true;
     }
 
+    unsigned int getBranchCount() {
+        return BranchCount;
+    }
+
 private:
     unsigned int BranchId;
+    unsigned int BranchCount;
 };
 
 class MyASTConsumer : public ASTConsumer
@@ -106,6 +120,10 @@ public:
             Visitor.TraverseDecl(*b);
         }
         return true;
+    }
+
+    MyASTVisitor getASTVisitor() {
+        return Visitor;
     }
 
 private:
@@ -198,6 +216,9 @@ int main(int argc, char *argv[])
 
     // Parse the file to AST, registering our consumer as the AST consumer.
     ParseAST(TheCompInst.getPreprocessor(), &TheConsumer, TheCompInst.getASTContext());
+
+    cout << "Total number of branches: ";
+    cout << TheConsumer.getASTVisitor().getBranchCount() << endl;
 
     return 0;
 }
