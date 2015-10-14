@@ -26,6 +26,10 @@
 using namespace clang;
 using namespace std;
 
+// CompilerInstance will hold the instance of the Clang compiler for us,
+// managing the various objects needed to run the compiler.
+static CompilerInstance TheCompInst;
+
 class MyASTVisitor : public RecursiveASTVisitor<MyASTVisitor>
 {
 public:
@@ -66,10 +70,6 @@ int main(int argc, char *argv[])
         llvm::errs() << "Usage: kcov-branch-identify <filename>\n";
         return 1;
     }
-
-    // CompilerInstance will hold the instance of the Clang compiler for us,
-    // managing the various objects needed to run the compiler.
-    CompilerInstance TheCompInst;
 
     // Diagnostics manage problems and issues in compile
     TheCompInst.createDiagnostics(NULL, false);
