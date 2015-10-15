@@ -28,3 +28,4 @@
 *.app
 
 /hw3/kcov-branch-identify
+/hw3/kcov

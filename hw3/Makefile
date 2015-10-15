@@ -5,9 +5,9 @@ LLVM_BUILD_DIRECTORY_NAME=llvm_build
 LLVM_BUILD_MODE=Debug+Asserts
 #LLVM_BUILD_MODE=Release+Asserts
 
-OBJS=	kcov-branch-identify.o 
-SRCS=	kcov-branch-identify.cpp 
-TARGET=	kcov-branch-identify
+SRCS=kcov-branch-identify.cpp kcov.cpp
+OBJS=$(SRCS:.cpp=.o)
+TARGET=$(basename $(SRCS))
 
 ################
 LLVM_SRC_PATH=$(LLVM_BASE_PATH)/$(LLVM_SRC_DIRECTORY_NAME)
@@ -31,12 +31,11 @@ CLANGLIBS = \
 CXX=g++
 CXX_INCLUDE=-I$(LLVM_SRC_PATH)/include -I$(LLVM_BUILD_PATH)/include
 CXXFLAGS=$(CXX_INCLUDE) $(CLANG_BUILD_FLAGS) $(CLANGLIBS) `$(LLVM_CONFIG_COMMAND)` -fno-rtti -g -O0 -D_DEBUG -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -fomit-frame-pointer -fvisibility-inlines-hidden -fno-exceptions -fno-rtti -fPIC -Woverloaded-virtual -Wcast-qual
-		
+
 all: $(TARGET)
 
-$(TARGET):$(OBJS)
-	$(CXX) $(OBJS) $(CXXFLAGS) -o $@ 
+$(TARGET): %: %.o
+	$(CXX) $^ $(CXXFLAGS) -o $@
 
-	
 clean:
 	rm -rf $(OBJS) $(TARGET)
