@@ -41,27 +41,77 @@ public:
         BranchId = 0;
         BranchCount = 0;
         isFirstFunctionDecl = true;
+        isInEnumDecl = false;
     }
 
     bool VisitStmt(Stmt *s) {
         SourceManager &sourceMgr = TheCompInst.getSourceManager();
+        LangOptions &langOpts = TheCompInst.getLangOpts();
         Expr *cond = NULL;
+        SourceLocation start;
+        SourceLocation end;
 
         if (isa<DoStmt>(s)) {
             DoStmt *doStmt = cast<DoStmt>(s);
             BranchCount += 2;
             cond = doStmt->getCond();
             pushCondition(cond);
+
+            stringstream sstm;
+            sstm << "kcov_count(" << BranchId << ") || (";
+            TheRewriter.InsertTextAfter(cond->getLocStart(), sstm.str());
+
+            sstm.str(string());
+            end = Lexer::getLocForEndOfToken(
+                    cond->getLocEnd(), 0, sourceMgr, langOpts);
+            sstm << ") && kcov_then(" << BranchId << ")";
+            TheRewriter.InsertTextAfter(end, sstm.str());
         } else if (isa<ForStmt>(s)) {
             ForStmt *forStmt = cast<ForStmt>(s);
             BranchCount += 2;
             cond = forStmt->getCond();
             pushCondition(cond);
+
+            stringstream sstm;
+            if (cond == NULL) {
+                Stmt *init = forStmt->getInit();
+                if (init == NULL) {
+                    start = Lexer::findLocationAfterToken(
+                            forStmt->getLParenLoc(), tok::semi,
+                            sourceMgr, langOpts, false);
+                } else {
+                    start = Lexer::findLocationAfterToken(
+                            init->getLocEnd(), tok::semi,
+                            sourceMgr, langOpts, false);
+                }
+                sstm << "kcov_count(" << BranchId << ") ";
+                sstm << "|| kcov_then(" << BranchId << ")";
+                TheRewriter.InsertTextAfter(start, sstm.str());
+            } else {
+                sstm << "kcov_count(" << BranchId << ") || (";
+                TheRewriter.InsertTextAfter(cond->getLocStart(), sstm.str());
+
+                sstm.str(string());
+                SourceLocation condEnd(Lexer::getLocForEndOfToken(
+                            cond->getLocEnd(), 0, sourceMgr, langOpts));
+                sstm << ") && kcov_then(" << BranchId << ")";
+                TheRewriter.InsertTextAfter(condEnd, sstm.str());
+            }
         } else if (isa<IfStmt>(s)) {
             IfStmt *ifStmt = cast<IfStmt>(s);
             BranchCount += 2;
             cond = ifStmt->getCond();
             pushCondition(cond);
+
+            stringstream sstm;
+            sstm << "kcov_count(" << BranchId << ") || (";
+            TheRewriter.InsertTextAfter(cond->getLocStart(), sstm.str());
+
+            sstm.str(string());
+            end = Lexer::getLocForEndOfToken(
+                    cond->getLocEnd(), 0, sourceMgr, langOpts);
+            sstm << ") && kcov_then(" << BranchId << ")";
+            TheRewriter.InsertTextAfter(end, sstm.str());
         } else if (isa<SwitchStmt>(s)) {
             SwitchStmt *switchStmt = cast<SwitchStmt>(s);
             SwitchCase *switchCaseList = switchStmt->getSwitchCaseList();
@@ -73,9 +123,24 @@ public:
             }
             BranchCount += 1;
             ConditionExprs.push_back(string("\\\"default\\\""));
+
+            stringstream sstm;
+            sstm << "default:" << endl;
+            sstm << "kcov_count(" << BranchId << ");" << endl;
+            sstm << "kcov_then(" << BranchId << ");" << endl;
+            TheRewriter.InsertTextAfter(
+                    switchStmt->getBody()->getLocEnd(), sstm.str());
         } else if (isa<CaseStmt>(s)) {
             CaseStmt *caseStmt = cast<CaseStmt>(s);
             BranchCount += 1;
+
+            stringstream sstm;
+            sstm << "kcov_count(" << BranchId << ");" << endl;
+            sstm << "kcov_then(" << BranchId << ");" << endl;
+            start = Lexer::getLocForEndOfToken(
+                    caseStmt->getColonLoc(), 0, sourceMgr, langOpts);
+            cout << endl;
+            TheRewriter.InsertTextAfter(start, sstm.str());
 
             ConditionExprs.push_back(EscapeString(
                         TheRewriter.ConvertToString(caseStmt->getLHS())));
@@ -83,12 +148,30 @@ public:
             DefaultStmt *defaultStmt = cast<DefaultStmt>(s);
             BranchCount += 1;
 
+            stringstream sstm;
+            sstm << "kcov_count(" << BranchId << ");" << endl;
+            sstm << "kcov_then(" << BranchId << ");" << endl;
+            start = Lexer::getLocForEndOfToken(
+                    defaultStmt->getColonLoc(), 0, sourceMgr, langOpts);
+            cout << endl;
+            TheRewriter.InsertTextAfter(start, sstm.str());
+
             ConditionExprs.push_back(string("\\\"default\\\""));
         } else if (isa<WhileStmt>(s)) {
             WhileStmt *whileStmt = cast<WhileStmt>(s);
             BranchCount += 2;
             cond = whileStmt->getCond();
             pushCondition(cond);
+
+            stringstream sstm;
+            sstm << "kcov_count(" << BranchId << ") || (";
+            TheRewriter.InsertTextAfter(cond->getLocStart(), sstm.str());
+
+            sstm.str(string());
+            end = Lexer::getLocForEndOfToken(
+                    cond->getLocEnd(), 0, sourceMgr, langOpts);
+            sstm << ") && kcov_then(" << BranchId << ")";
+            TheRewriter.InsertTextAfter(end, sstm.str());
         } else if (isa<AbstractConditionalOperator>(s)) {
             if (isInEnumDecl) {
                 return true;
@@ -98,6 +181,16 @@ public:
             BranchCount += 2;
             cond = condOp->getCond();
             pushCondition(cond);
+
+            stringstream sstm;
+            sstm << "kcov_count(" << BranchId << ") || (";
+            TheRewriter.InsertTextAfter(cond->getLocStart(), sstm.str());
+
+            sstm.str(string());
+            end = Lexer::getLocForEndOfToken(
+                    cond->getLocEnd(), 0, sourceMgr, langOpts);
+            sstm << ") && kcov_then(" << BranchId << ")";
+            TheRewriter.InsertTextAfter(end, sstm.str());
         } else {
             return true;
         }
@@ -218,11 +311,16 @@ public:
         TheRewriter.InsertTextAfter(FirstFunctionDeclLocation, sstm.str());
     }
 
+    void setIsInEnumDecl(bool value) {
+        isInEnumDecl = value;
+    }
+
 private:
     unsigned int BranchId;
     unsigned int BranchCount;
     bool isFirstFunctionDecl;
     SourceLocation FirstFunctionDeclLocation;
+    bool isInEnumDecl;
     vector<unsigned int> BranchLines;
     vector<string> ConditionExprs;
 
@@ -261,6 +359,7 @@ public:
     virtual bool HandleTopLevelDecl(DeclGroupRef DR) {
         for (DeclGroupRef::iterator b = DR.begin(), e = DR.end(); b != e; ++b) {
             // Travel each function declaration using MyASTVisitor
+            Visitor.setIsInEnumDecl(isa<EnumDecl>(*b));
             Visitor.TraverseDecl(*b);
         }
         return true;
