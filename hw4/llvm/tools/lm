@@ -1,0 +1,95 @@
+./llvm-symbolizer/LLVMSymbolize.cpp:51:                        LineInfo.getLine(), LineInfo.getColumn());
+./llvm-symbolizer/LLVMSymbolize.cpp:414:  Result << Filename << ":" << LineInfo.getLine() << ":" << LineInfo.getColumn()
+./llvm-dis/llvm-dis.cpp:57:  OS << DL.getLine() << ":" << DL.getCol();
+./llvm-objdump/MachODump.cpp:432:                << dli.getLine() << ':' << dli.getColumn();
+./clang/lib/Frontend/TextDiagnostic.cpp:415:  unsigned TargetColumns = Columns;
+./clang/lib/Frontend/TextDiagnostic.cpp:418:  if (TargetColumns > ellipses_space+CaretColumnsOutsideSource)
+./clang/lib/Frontend/TextDiagnostic.cpp:419:    TargetColumns -= ellipses_space+CaretColumnsOutsideSource;
+./clang/lib/Frontend/TextDiagnostic.cpp:444:      if (NewColumns <= TargetColumns) {
+./clang/lib/Frontend/TextDiagnostic.cpp:466:      if (NewColumns <= TargetColumns) {
+./clang/lib/Frontend/TextDiagnostic.cpp:816:    if (unsigned ColNo = PLoc.getColumn()) {
+./clang/lib/Frontend/TextDiagnostic.cpp:867:        << SM.getColumnNumber(BInfo.first, BInfo.second) << '-'
+./clang/lib/Frontend/TextDiagnostic.cpp:869:        << (SM.getColumnNumber(EInfo.first, EInfo.second)+TokSize)
+./clang/lib/Frontend/TextDiagnostic.cpp:1022:          = SM.getColumnNumber(HintLocInfo.first, HintLocInfo.second) - 1;
+./clang/lib/Frontend/TextDiagnostic.cpp:1101:  unsigned ColNo = SM.getColumnNumber(FID, FileOffset);
+./clang/lib/Frontend/TextDiagnostic.cpp:1264:      << ':' << SM.getColumnNumber(BInfo.first, BInfo.second)
+./clang/lib/Frontend/TextDiagnostic.cpp:1266:      << ':' << SM.getColumnNumber(EInfo.first, EInfo.second)
+./clang/lib/Frontend/SerializedDiagnosticPrinter.cpp:298:  Record.push_back(PLoc.getColumn()+TokSize);
+./clang/lib/Frontend/LogDiagnosticPrinter.cpp:166:      DE.Column = PLoc.getColumn();
+./clang/lib/StaticAnalyzer/Frontend/AnalysisConsumer.cpp:293:                     << Loc.getColumn() << '\n';
+./clang/lib/StaticAnalyzer/Core/BugReporter.cpp:2480:      if (FS && FS->getCollection()->IgnoreParens() == s2Start &&
+./clang/lib/StaticAnalyzer/Core/HTMLDiagnostics.cpp:295:  unsigned ColNo = SM.getColumnNumber(LPosInfo.first, LPosInfo.second);
+./clang/lib/StaticAnalyzer/Checkers/AnalyzerStatsChecker.cpp:102:    output << "block(line:" << Loc.getLine() << ":col:" << Loc.getColumn();
+./clang/lib/StaticAnalyzer/Checkers/BasicObjCFoundationChecks.cpp:849:  SVal CollectionVal = C.getSVal(FCS->getCollection());
+./clang/lib/StaticAnalyzer/Checkers/BasicObjCFoundationChecks.cpp:875:  if (!isKnownNonNilCollectionType(FCS->getCollection()->getType()))
+./clang/lib/StaticAnalyzer/Checkers/BasicObjCFoundationChecks.cpp:940:    State->getSVal(FCS->getCollection(), C.getLocationContext()).getAsSymbol();
+./clang/lib/Index/CommentToXML.cpp:897:               << "\" column=\"" << SM.getColumnNumber(FID, FileOffset)
+./clang/lib/Sema/SemaTemplateInstantiateDecl.cpp:386:                             D->getAccessSpecifierLoc(), D->getColonLoc());
+./clang/lib/Format/Format.cpp:582:                                         /*TargetColumn=*/0);
+./clang/lib/Format/Format.cpp:601:            ColumnLimit = getColumnLimit(TheLine.InPPDirective);
+./clang/lib/Format/Format.cpp:766:  unsigned getColumnLimit(bool InPPDirective) const {
+./clang/lib/Format/ContinuationIndenter.cpp:143:      getLengthToMatchingParen(Previous) + State.Column > getColumnLimit(State))
+./clang/lib/Format/ContinuationIndenter.cpp:615:              getColumnLimit(State))
+./clang/lib/Format/ContinuationIndenter.cpp:667:  if (State.Column > getColumnLimit(State)) {
+./clang/lib/Format/ContinuationIndenter.cpp:668:    unsigned ExcessCharacters = State.Column - getColumnLimit(State);
+./clang/lib/Format/ContinuationIndenter.cpp:694:  if (ColumnsUsed > getColumnLimit(State))
+./clang/lib/Format/ContinuationIndenter.cpp:695:    return Style.PenaltyExcessCharacter * (ColumnsUsed - getColumnLimit(State));
+./clang/lib/Format/ContinuationIndenter.cpp:737:  unsigned ColumnLimit = getColumnLimit(State);
+./clang/lib/Format/ContinuationIndenter.cpp:859:unsigned ContinuationIndenter::getColumnLimit(const LineState &State) const {
+./clang/lib/Format/FormatToken.cpp:50:  const ColumnFormat *Format = getColumnFormat(RemainingCodePoints);
+./clang/lib/Format/FormatToken.cpp:188:CommaSeparatedList::getColumnFormat(unsigned RemainingCharacters) const {
+./clang/lib/Serialization/ASTWriterDecl.cpp:1065:  Writer.AddSourceLocation(D->getColonLoc(), Record);
+./clang/lib/Serialization/ASTWriterStmt.cpp:86:  Writer.AddSourceLocation(S->getColonLoc(), Record);
+./clang/lib/Serialization/ASTWriterStmt.cpp:624:  Writer.AddSourceLocation(E->getColonLoc(), Record);
+./clang/lib/Serialization/ASTWriterStmt.cpp:637:  Writer.AddSourceLocation(E->getColonLoc(), Record);
+./clang/lib/Serialization/ASTWriterStmt.cpp:1030:  Writer.AddStmt(S->getCollection());
+./clang/lib/Serialization/ASTWriterStmt.cpp:1114:  Writer.AddSourceLocation(S->getColonLoc(), Record);
+./clang/lib/Serialization/ASTWriterStmt.cpp:1365:  Writer.AddSourceLocation(E->getColonColonLoc(), Record);
+./clang/lib/Analysis/CFG.cpp:2259:  return addStmt(S->getCollection());
+./clang/lib/ARCMigrate/TransEmptyStatementsAndDealloc.cpp:135:    Expr *Exp = S->getCollection();
+./clang/lib/ARCMigrate/TransProtectedScope.cpp:175:    Pass.TA.insertAfterToken(info.SC->getColonLoc(), " {");
+./clang/lib/CodeGen/CGDebugInfo.cpp:303:/// getColumnNumber - Get column number for the location.
+./clang/lib/CodeGen/CGDebugInfo.cpp:304:unsigned CGDebugInfo::getColumnNumber(SourceLocation Loc, bool Force) {
+./clang/lib/CodeGen/CGDebugInfo.cpp:314:  return PLoc.isValid()? PLoc.getColumn() : 0;
+./clang/lib/CodeGen/CGDebugInfo.cpp:2550:                                   getColumnNumber(CurLoc, ForceColumnInfo),
+./clang/lib/CodeGen/CGDebugInfo.cpp:2563:                                getColumnNumber(CurLoc));
+./clang/lib/CodeGen/CGDebugInfo.cpp:2580:                                  getColumnNumber(Loc),
+./clang/lib/CodeGen/CGDebugInfo.cpp:2716:    Column = getColumnNumber(VD->getLocation());
+./clang/lib/CodeGen/CGDebugInfo.cpp:2858:  unsigned Column = getColumnNumber(VD->getLocation());
+./clang/lib/CodeGen/CGDebugInfo.cpp:2930:  unsigned column = getColumnNumber(loc);
+./clang/lib/CodeGen/CodeGenAction.cpp:271:        unsigned Column = D.getColumnNo();
+./clang/lib/CodeGen/CodeGenAction.cpp:409:        Err.getColumnNo() + 1);
+./clang/lib/CodeGen/CGObjC.cpp:1463:    Collection = EmitARCRetainScalarExpr(S.getCollection());
+./clang/lib/CodeGen/CGObjC.cpp:1466:    EmitObjCConsumeObject(S.getCollection()->getType(), Collection);
+./clang/lib/CodeGen/CGObjC.cpp:1468:    Collection = EmitScalarExpr(S.getCollection());
+./clang/lib/CodeGen/CGExpr.cpp:2121:    Builder.getInt32(PLoc.isValid() ? PLoc.getColumn() : 0)
+./clang/lib/AST/ASTDumper.cpp:411:       << ':' << PLoc.getColumn();
+./clang/lib/AST/ASTDumper.cpp:416:       << ':' << PLoc.getColumn();
+./clang/lib/AST/ASTDumper.cpp:419:    OS << "col" << ':' << PLoc.getColumn();
+./clang/lib/AST/TypePrinter.cpp:914:           << ':' << PLoc.getColumn();
+./clang/lib/AST/StmtPrinter.cpp:312:  PrintExpr(Node->getCollection());
+./clang/lib/Basic/SourceManager.cpp:1140:/// getColumnNumber - Return the column # for the specified file position.
+./clang/lib/Basic/SourceManager.cpp:1142:unsigned SourceManager::getColumnNumber(FileID FID, unsigned FilePos,
+./clang/lib/Basic/SourceManager.cpp:1191:  return getColumnNumber(LocInfo.first, LocInfo.second, Invalid);
+./clang/lib/Basic/SourceManager.cpp:1198:  return getColumnNumber(LocInfo.first, LocInfo.second, Invalid);
+./clang/lib/Basic/SourceManager.cpp:1204:  return getPresumedLoc(Loc).getColumn();
+./clang/lib/Basic/SourceManager.cpp:1519:  unsigned ColNo  = getColumnNumber(LocInfo.first, LocInfo.second, &Invalid);
+./clang/lib/Basic/SourceLocation.cpp:53:       << ':' << PLoc.getColumn();
+./clang/tools/libclang/CXSourceLocation.cpp:296:  if (column) *column = PreLoc.getColumn();
+./clang/tools/libclang/CXSourceLocation.cpp:341:    *column = SM.getColumnNumber(FID, FileOffset);
+./clang/tools/libclang/CXSourceLocation.cpp:378:    *column = SM.getColumnNumber(FID, FileOffset);
+./clang/tools/libclang/IndexingContext.cpp:911:    *column = SM.getColumnNumber(FID, FileOffset);
+./clang/tools/arcmt-test/arcmt-test.cpp:317:            << PL.getColumn();
+./clang/tools/arcmt-test/arcmt-test.cpp:329:             << PL.getColumn();
+./clang/tools/arcmt-test/arcmt-test.cpp:335:  unsigned endCol = PL.getColumn() - 1;
+./clang/unittests/Basic/SourceManagerTest.cpp:119:TEST_F(SourceManagerTest, getColumnNumber) {
+./clang/unittests/Basic/SourceManagerTest.cpp:130:  EXPECT_EQ(1U, SourceMgr.getColumnNumber(MainFileID, 0, &Invalid));
+./clang/unittests/Basic/SourceManagerTest.cpp:134:  EXPECT_EQ(5U, SourceMgr.getColumnNumber(MainFileID, 4, &Invalid));
+./clang/unittests/Basic/SourceManagerTest.cpp:138:  EXPECT_EQ(1U, SourceMgr.getColumnNumber(MainFileID, 7, &Invalid));
+./clang/unittests/Basic/SourceManagerTest.cpp:142:  EXPECT_EQ(5U, SourceMgr.getColumnNumber(MainFileID, 11, &Invalid));
+./clang/unittests/Basic/SourceManagerTest.cpp:146:  EXPECT_EQ(7U, SourceMgr.getColumnNumber(MainFileID, strlen(Source),
+./clang/unittests/Basic/SourceManagerTest.cpp:151:  SourceMgr.getColumnNumber(MainFileID, strlen(Source)+1, &Invalid);
+./clang/unittests/Basic/SourceManagerTest.cpp:156:  SourceMgr.getColumnNumber(FileID(), 0, &Invalid);
+./clang/unittests/Basic/SourceManagerTest.cpp:160:  SourceMgr.getColumnNumber(FileID(), 1, &Invalid);
+./clang/unittests/Basic/SourceManagerTest.cpp:164:  EXPECT_EQ(1U, SourceMgr.getColumnNumber(MainFileID, 0, NULL));
+./llvm-dwarfdump/llvm-dwarfdump.cpp:84:         << dli.getLine() << ':' << dli.getColumn() << '\n';
