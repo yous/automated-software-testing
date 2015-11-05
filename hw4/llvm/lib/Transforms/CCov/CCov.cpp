@@ -22,9 +22,9 @@
 
 /* CCov.cpp
  *
- * Currently, it is a 'blank' FunctionPass that gives no effect on the target 
- * program. You can implement your own FunctionPass by writing down your own 
- * code where the comment "Fill out" is.  
+ * Currently, it is a 'blank' FunctionPass that gives no effect on the target
+ * program. You can implement your own FunctionPass by writing down your own
+ * code where the comment "Fill out" is.
  * */
 
 using namespace llvm;
@@ -41,7 +41,7 @@ namespace {
 		virtual bool doInitialization(Module &M) {
 			/* doInitialization() is executed once per target module,
 			 * and executed before any invocation of runOnFunction().
-			 * This function is for initialization and the module level 
+			 * This function is for initialization and the module level
 			 * instrumentation (e.g., add functions). */
 
 			// Fill out.
@@ -59,7 +59,7 @@ namespace {
 		} //doFinalization.
 
     virtual bool runOnFunction(Function &F) {
-			/* This function is invoked once for every function in the target 
+			/* This function is invoked once for every function in the target
 			 * module by LLVM */
 
 			// Fill out.
@@ -88,7 +88,7 @@ namespace llvm {
 }
 
 INITIALIZE_PASS_BEGIN(CCov, "CCov", "monitor writes to integers", false, false)
-INITIALIZE_PASS_END(CCov, "CCov", "monitor writes to integers", false,  false) 
+INITIALIZE_PASS_END(CCov, "CCov", "monitor writes to integers", false,  false)
 
 static struct Register {
 	Register() {
@@ -97,10 +97,10 @@ static struct Register {
 } X;
 
 static void registerCCovPass(
-	const llvm::PassManagerBuilder &Builder, 
+	const llvm::PassManagerBuilder &Builder,
 	llvm::PassManagerBase &PM) {
 	PM.add(new CCov) ;
 }
 
-static llvm::RegisterStandardPasses 
+static llvm::RegisterStandardPasses
 RegisterCCov(llvm::PassManagerBuilder::EP_EarlyAsPossible, registerCCovPass) ;
