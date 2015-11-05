@@ -46,7 +46,7 @@ namespace {
 
       // Fill out.
 
-      return true ;
+      return true;
     } // doInitialization.
 
     virtual bool doFinalization(Module &M) {
@@ -55,26 +55,26 @@ namespace {
 
       // Fill out.
 
-      return false ;
-    } //doFinalization.
+      return false;
+    } // doFinalization.
 
     virtual bool runOnFunction(Function &F) {
       /* This function is invoked once for every function in the target
-       * module by LLVM */
+       * module by LLVM. */
 
       // Fill out.
 
       return true;
-    } //runOnFunction.
+    } // runOnFunction.
 
     bool runOnBasicBlock (BasicBlock &B) {
       /* This function is invoked by runOnFunction() for each basic block
        * in the function. Note that this is not invoked by LLVM and different
-       * from runOnBasicBlock() of BasicBlockPass.*/
+       * from runOnBasicBlock() of BasicBlockPass. */
 
       // Fill out.
 
-      return true ;
+      return true;
     } // runOnBasicBlock.
   };
 }
@@ -84,7 +84,7 @@ namespace {
 char CCov::ID = 0;
 
 namespace llvm {
-  void initializeCCovPass(llvm::PassRegistry &) ;
+  void initializeCCovPass(llvm::PassRegistry &);
 }
 
 INITIALIZE_PASS_BEGIN(CCov, "CCov", "monitor writes to integers", false, false)
@@ -92,15 +92,15 @@ INITIALIZE_PASS_END(CCov, "CCov", "monitor writes to integers", false,  false)
 
 static struct Register {
   Register() {
-    initializeCCovPass(*llvm::PassRegistry::getPassRegistry()) ;
+    initializeCCovPass(*llvm::PassRegistry::getPassRegistry());
   }
 } X;
 
 static void registerCCovPass(
     const llvm::PassManagerBuilder &Builder,
     llvm::PassManagerBase &PM) {
-  PM.add(new CCov) ;
+  PM.add(new CCov);
 }
 
 static llvm::RegisterStandardPasses
-RegisterCCov(llvm::PassManagerBuilder::EP_EarlyAsPossible, registerCCovPass) ;
+RegisterCCov(llvm::PassManagerBuilder::EP_EarlyAsPossible, registerCCovPass);
