@@ -34,48 +34,48 @@ namespace {
   struct CCov: public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
 
-		// Fill out.
+    // Fill out.
 
-		CCov() : FunctionPass(ID) {}
+    CCov() : FunctionPass(ID) {}
 
-		virtual bool doInitialization(Module &M) {
-			/* doInitialization() is executed once per target module,
-			 * and executed before any invocation of runOnFunction().
-			 * This function is for initialization and the module level
-			 * instrumentation (e.g., add functions). */
+    virtual bool doInitialization(Module &M) {
+      /* doInitialization() is executed once per target module,
+       * and executed before any invocation of runOnFunction().
+       * This function is for initialization and the module level
+       * instrumentation (e.g., add functions). */
 
-			// Fill out.
+      // Fill out.
 
-			return true ;
-		} // doInitialization.
+      return true ;
+    } // doInitialization.
 
-		virtual bool doFinalization(Module &M) {
-			/* This function is executed once per target module after
-			 * all executions of runOnFunction() under the module. */
+    virtual bool doFinalization(Module &M) {
+      /* This function is executed once per target module after
+       * all executions of runOnFunction() under the module. */
 
-			// Fill out.
+      // Fill out.
 
-			return false ;
-		} //doFinalization.
+      return false ;
+    } //doFinalization.
 
     virtual bool runOnFunction(Function &F) {
-			/* This function is invoked once for every function in the target
-			 * module by LLVM */
+      /* This function is invoked once for every function in the target
+       * module by LLVM */
 
-			// Fill out.
+      // Fill out.
 
       return true;
     } //runOnFunction.
 
-		bool runOnBasicBlock (BasicBlock &B) {
-			/* This function is invoked by runOnFunction() for each basic block
-			 * in the function. Note that this is not invoked by LLVM and different
-			 * from runOnBasicBlock() of BasicBlockPass.*/
+    bool runOnBasicBlock (BasicBlock &B) {
+      /* This function is invoked by runOnFunction() for each basic block
+       * in the function. Note that this is not invoked by LLVM and different
+       * from runOnBasicBlock() of BasicBlockPass.*/
 
-			// Fill out.
+      // Fill out.
 
-			return true ;
-		} // runOnBasicBlock.
+      return true ;
+    } // runOnBasicBlock.
   };
 }
 
@@ -84,22 +84,22 @@ namespace {
 char CCov::ID = 0;
 
 namespace llvm {
-	void initializeCCovPass(llvm::PassRegistry &) ;
+  void initializeCCovPass(llvm::PassRegistry &) ;
 }
 
 INITIALIZE_PASS_BEGIN(CCov, "CCov", "monitor writes to integers", false, false)
 INITIALIZE_PASS_END(CCov, "CCov", "monitor writes to integers", false,  false)
 
 static struct Register {
-	Register() {
-		initializeCCovPass(*llvm::PassRegistry::getPassRegistry()) ;
-	}
+  Register() {
+    initializeCCovPass(*llvm::PassRegistry::getPassRegistry()) ;
+  }
 } X;
 
 static void registerCCovPass(
-	const llvm::PassManagerBuilder &Builder,
-	llvm::PassManagerBase &PM) {
-	PM.add(new CCov) ;
+    const llvm::PassManagerBuilder &Builder,
+    llvm::PassManagerBase &PM) {
+  PM.add(new CCov) ;
 }
 
 static llvm::RegisterStandardPasses
