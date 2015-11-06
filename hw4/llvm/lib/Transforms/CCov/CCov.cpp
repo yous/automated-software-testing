@@ -1,6 +1,8 @@
 #define DEBUG_TYPE "CCov"
 
 #include <iostream>
+#include <map>
+#include <vector>
 
 #include "llvm/DebugInfo.h"
 #include "llvm/Pass.h"
@@ -34,7 +36,20 @@ namespace {
   struct CCov: public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
 
-    // Fill out.
+    // These variables are to store the type instances for primitive types.
+    Type *intTy, *intPtrTy, *voidTy;
+    // Points to the function instance of _init_.
+    Constant *p_init;
+    // Points to the function instance of _probe_.
+    Constant *p_probe;
+    // Holds index information for each line.
+    map<int, int> map_lines;
+    // Holds lines.
+    vector<int> lines;
+    // Holds indices.
+    vector<int> indices;
+    // Holds whether it's switch or not.
+    vector<bool> switches;
 
     CCov() : FunctionPass(ID) {}
 
@@ -44,7 +59,41 @@ namespace {
        * This function is for initialization and the module level
        * instrumentation (e.g., add functions). */
 
-      // Fill out.
+      /* Check if there is a function in a target program that conflicts with
+       * the probe functions. */
+      if (M.getFunction(StringRef("_init_")) != NULL) {
+        errs() << "Error: function _init_() already exists.\n";
+        exit(1);
+      }
+      if (M.getFunction(StringRef("_probe_")) != NULL) {
+        errs() << "Error: function _probe_() already exists.\n";
+        exit(1);
+      }
+
+      /* Store the type instances for primitive types. */
+      intTy = Type::getInt32Ty(M.getContext());
+      intPtrTy = Type::getInt32PtrTy(M.getContext());
+      voidTy = Type::getVoidTy(M.getContext());
+
+      /* Add a new declaration of function _init_ which accept three arguments
+       * (i.e., int, char **, and int *). */
+      Type *initArgs[4];
+      initArgs[0] = intTy;
+      initArgs[1] = intPtrTy;
+      initArgs[2] = intPtrTy;
+      initArgs[3] = intPtrTy;
+      FunctionType *initFty = FunctionType::get(
+          voidTy, ArrayRef<Type *>(initArgs), false);
+      p_init = M.getOrInsertFunction("_init_", initFty);
+
+      /* Add a new declaration of function _probe_ which accept two arguments
+       * (i.e., int, and int). */
+      Type *probeArgs[2];
+      probeArgs[0] = intTy;
+      probeArgs[1] = intTy;
+      FunctionType *probeFty = FunctionType::get(
+          voidTy, ArrayRef<Type *>(probeArgs), false);
+      p_probe = M.getOrInsertFunction("_probe_", probeFty);
 
       return true;
     } // doInitialization.
@@ -53,7 +102,50 @@ namespace {
       /* This function is executed once per target module after
        * all executions of runOnFunction() under the module. */
 
-      // Fill out.
+      /* Add a function call to _init_ at the beginning of the main function. */
+      Function *mainFunc = M.getFunction(StringRef("main"));
+      if (mainFunc != NULL) {
+        IRBuilder<> builder(M.getFunction(StringRef("main"))
+            ->getEntryBlock().getFirstInsertionPt());
+
+        vector<Value *> initArgs;
+        initArgs.push_back(ConstantInt::get(intTy, lines.size()));
+
+        vector<Constant *> linesVec;
+        for (size_t i = 0; i < lines.size(); i++) {
+          linesVec.push_back(ConstantInt::get(intTy, lines[i]));
+        }
+        Constant *linesArr = ConstantArray::get(
+            ArrayType::get(intTy, lines.size()), linesVec);
+        GlobalVariable *linesGlob = new GlobalVariable(
+            M, ArrayType::get(intTy, lines.size()), false,
+            GlobalValue::PrivateLinkage, linesArr);
+        initArgs.push_back(builder.CreateBitCast(linesGlob, intPtrTy));
+
+        vector<Constant *> indicesVec;
+        for (size_t i = 0; i < indices.size(); i++) {
+          indicesVec.push_back(ConstantInt::get(intTy, indices[i]));
+        }
+        Constant *indicesArr = ConstantArray::get(
+            ArrayType::get(intTy, indices.size()), indicesVec);
+        GlobalVariable *indicesGlob = new GlobalVariable(
+            M, ArrayType::get(intTy, indices.size()), false,
+            GlobalValue::PrivateLinkage, indicesArr);
+        initArgs.push_back(builder.CreateBitCast(indicesGlob, intPtrTy));
+
+        vector<Constant *> switchesVec;
+        for (size_t i = 0; i < switches.size(); i++) {
+          switchesVec.push_back(ConstantInt::get(intTy, switches[i]));
+        }
+        Constant *switchesArr = ConstantArray::get(
+            ArrayType::get(intTy, switches.size()), switchesVec);
+        GlobalVariable *switchesGlob = new GlobalVariable(
+            M, ArrayType::get(intTy, switches.size()), false,
+            GlobalValue::PrivateLinkage, switchesArr);
+        initArgs.push_back(builder.CreateBitCast(switchesGlob, intPtrTy));
+
+        builder.CreateCall(p_init, initArgs);
+      }
 
       return false;
     } // doFinalization.
@@ -62,7 +154,10 @@ namespace {
       /* This function is invoked once for every function in the target
        * module by LLVM. */
 
-      // Fill out.
+      /* Invoke runOnBasicBlock() for each basic block under F. */
+      for (Function::iterator it = F.begin(); it != F.end(); it++) {
+        runOnBasicBlock(*it);
+      }
 
       return true;
     } // runOnFunction.
@@ -72,7 +167,88 @@ namespace {
        * in the function. Note that this is not invoked by LLVM and different
        * from runOnBasicBlock() of BasicBlockPass. */
 
-      // Fill out.
+      map<int, int>::const_iterator map_it;
+
+      for (BasicBlock::iterator it = B.begin(); it != B.end(); it++) {
+        if (it->getOpcode() == Instruction::Br) {
+          /* Br instruction. */
+          BranchInst *brInst = dyn_cast<BranchInst>(it);
+          if (brInst->isConditional()) {
+            int line = brInst->getDebugLoc().getLine();
+            int index;
+            map_it = map_lines.find(line);
+            if (map_it == map_lines.end()) {
+              index = 0;
+            } else {
+              index = map_it->second + 1;
+            }
+
+            // Add meta information for the branch.
+            lines.push_back(line);
+            indices.push_back(index);
+            switches.push_back(false);
+
+            // Create a new block that points to true block successor.
+            BasicBlock *thenProbe = BasicBlock::Create(
+                    getGlobalContext(), Twine(""), B.getParent());
+            IRBuilder<> thenBuilder(thenProbe);
+            Value *probeArgs[2];
+            probeArgs[0] = ConstantInt::get(intTy, lines.size() - 1);
+            probeArgs[1] = ConstantInt::get(intTy, 1);
+            thenBuilder.CreateCall(p_probe, probeArgs);
+            thenBuilder.CreateBr(brInst->getSuccessor(0));
+            brInst->setSuccessor(0, thenProbe);
+
+            // Create a new block that points to else block successor.
+            BasicBlock *elseProbe = BasicBlock::Create(
+                    getGlobalContext(), Twine(""), B.getParent());
+            IRBuilder<> elseBuilder(elseProbe);
+            probeArgs[0] = ConstantInt::get(intTy, lines.size() - 1);
+            probeArgs[1] = ConstantInt::get(intTy, 0);
+            elseBuilder.CreateCall(p_probe, probeArgs);
+            elseBuilder.CreateBr(brInst->getSuccessor(1));
+            brInst->setSuccessor(1, elseProbe);
+
+            map_lines[line] = index;
+          }
+        } else if (it->getOpcode() == Instruction::Switch) {
+          /* Switch instruction. */
+          SwitchInst *switchInst = dyn_cast<SwitchInst>(it);
+          int line = switchInst->getDebugLoc().getLine();
+          int index;
+          map_it = map_lines.find(line);
+          if (map_it == map_lines.end()) {
+            index = 0;
+          } else {
+            index = map_it->second + 1;
+          }
+
+          for (unsigned i = 1; i <= switchInst->getNumSuccessors(); i++) {
+            // Add meta information for the branch.
+            lines.push_back(line);
+            indices.push_back(index);
+            switches.push_back(true);
+
+            BasicBlock *block;
+            // Record default block at the end.
+            if (i == switchInst->getNumSuccessors()) {
+                // Default block.
+                block = switchInst->getSuccessor(0);
+            } else {
+                // Case block.
+                block = switchInst->getSuccessor(i);
+            }
+            IRBuilder<> builder(block->getFirstInsertionPt());
+            Value *probeArgs[2];
+            probeArgs[0] = ConstantInt::get(intTy, lines.size() - 1);
+            probeArgs[1] = ConstantInt::get(intTy, 1);
+            builder.CreateCall(p_probe, probeArgs);
+
+            index++;
+          }
+          map_lines[line] = index - 1;
+        }
+      }
 
       return true;
     } // runOnBasicBlock.
