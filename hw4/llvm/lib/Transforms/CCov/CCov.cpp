@@ -188,26 +188,15 @@ namespace {
             indices.push_back(index);
             switches.push_back(false);
 
-            // Create a new block that points to true block successor.
-            BasicBlock *thenProbe = BasicBlock::Create(
-                    getGlobalContext(), Twine(""), B.getParent());
-            IRBuilder<> thenBuilder(thenProbe);
+            // Create a probe call before branch.
+            CastInst *castInst = CastInst::CreateIntegerCast(
+                brInst->getCondition(), intTy, false);
             Value *probeArgs[2];
             probeArgs[0] = ConstantInt::get(intTy, lines.size() - 1);
-            probeArgs[1] = ConstantInt::get(intTy, 1);
-            thenBuilder.CreateCall(p_probe, probeArgs);
-            thenBuilder.CreateBr(brInst->getSuccessor(0));
-            brInst->setSuccessor(0, thenProbe);
-
-            // Create a new block that points to else block successor.
-            BasicBlock *elseProbe = BasicBlock::Create(
-                    getGlobalContext(), Twine(""), B.getParent());
-            IRBuilder<> elseBuilder(elseProbe);
-            probeArgs[0] = ConstantInt::get(intTy, lines.size() - 1);
-            probeArgs[1] = ConstantInt::get(intTy, 0);
-            elseBuilder.CreateCall(p_probe, probeArgs);
-            elseBuilder.CreateBr(brInst->getSuccessor(1));
-            brInst->setSuccessor(1, elseProbe);
+            probeArgs[1] = castInst;
+            CallInst *probeCall = CallInst::Create(p_probe, probeArgs);
+            B.getInstList().insert(brInst, castInst);
+            B.getInstList().insert(brInst, probeCall);
 
             map_lines[line] = index;
           }
@@ -232,11 +221,11 @@ namespace {
             BasicBlock *block;
             // Record default block at the end.
             if (i == switchInst->getNumSuccessors()) {
-                // Default block.
-                block = switchInst->getSuccessor(0);
+              // Default block.
+              block = switchInst->getSuccessor(0);
             } else {
-                // Case block.
-                block = switchInst->getSuccessor(i);
+              // Case block.
+              block = switchInst->getSuccessor(i);
             }
             IRBuilder<> builder(block->getFirstInsertionPt());
             Value *probeArgs[2];
