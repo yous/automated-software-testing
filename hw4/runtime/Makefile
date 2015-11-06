@@ -1,2 +1,2 @@
 all:
-	clang -c intwrite.c
+	clang -c ccov.c
