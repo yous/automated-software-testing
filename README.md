@@ -101,3 +101,51 @@ You can get additional information using `/usr/bin/time`:
 ``` sh
 /usr/bin/time -v cbmc example.c --unwind 9 --no-unwinding-assertions
 ```
+
+## Homework 6
+
+We can get the information of loops with `--show-loops` option:
+
+```
+$ cbmc cbmc.c --show-loops
+file cbmc.c: Parsing
+Converting
+Type-checking cbmc
+file cbmc.c line 144 function main: function `c::nondet_int' is not declared
+Generating GOTO Program
+Adding CPROVER library
+Function Pointer Removal
+Partial Inlining
+Generic Property Instrumentation
+Loop c::verify.0:
+  file cbmc.c line 101 function verify
+
+Loop c::verify.1:
+  file cbmc.c line 106 function verify
+
+Loop c::verify.2:
+  file cbmc.c line 128 function verify
+
+Loop c::verify.3:
+  file cbmc.c line 105 function verify
+
+Loop c::main.0:
+  file cbmc.c line 143 function main
+```
+
+Find a counter example with:
+
+``` sh
+cbmc cbmc.c --unwindset \
+    c::verify.0:12,c::verify.1:12,c::verify.2:12,c::verify.3:12,c::main.0:7 \
+    --no-unwinding-assertions
+```
+
+Prove the path of length 7 is the shortest solution by running CBMC with
+`c::main.0:6` option:
+
+``` sh
+cbmc cbmc.c --unwindset \
+    c::verify.0:12,c::verify.1:12,c::verify.2:12,c::verify.3:12,c::main.0:6 \
+    --no-unwinding-assertions
+```
