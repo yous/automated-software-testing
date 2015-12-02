@@ -87,3 +87,17 @@ cd test/grep
 clang -g -Xclang -load -Xclang ${LLVM_LIB_PATH}/IntWrite.so grep.c \
   ../../runtime/intwrite.o
 ```
+
+## Homework 5
+
+Run CBMC with:
+
+``` sh
+cbmc example.c --unwind 9 --no-unwinding-assertions
+```
+
+You can get additional information using `/usr/bin/time`:
+
+``` sh
+/usr/bin/time -v cbmc example.c --unwind 9 --no-unwinding-assertions
+```
