@@ -104,6 +104,8 @@ You can get additional information using `/usr/bin/time`:
 
 ## Homework 6
 
+### C model
+
 We can get the information of loops with `--show-loops` option:
 
 ```
@@ -148,4 +150,24 @@ Prove the path of length 7 is the shortest solution by running CBMC with
 cbmc cbmc.c --unwindset \
     c::verify.0:12,c::verify.1:12,c::verify.2:12,c::verify.3:12,c::main.0:6 \
     --no-unwinding-assertions
+```
+
+### Promela model
+
+Generate `pan` with:
+
+```
+spin -a crit.pml && gcc pan.c -o pan
+```
+
+Then run Spin to find a counter example with the shortest path:
+
+```
+./pan -i
+```
+
+Then you can see the statements of trail:
+
+```
+spin -p -t crit.pml
 ```
