@@ -57,3 +57,5 @@
 /hw4/llvm/bindings/ocaml/backends/Makefile.SystemZ
 /hw4/llvm/bindings/ocaml/backends/Makefile.X86
 /hw4/llvm/bindings/ocaml/backends/Makefile.XCore
+
+/hw7/triangle/triangle
