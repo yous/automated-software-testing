@@ -180,3 +180,10 @@ Test `triangle.c` with:
 crestc triangle.c
 run_crest ./triangle 10000 -dfs
 ```
+
+See the input and execution with:
+
+``` sh
+cat input
+print_execution
+```
