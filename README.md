@@ -171,3 +171,12 @@ Then you can see the statements of trail:
 ```
 spin -p -t crit.pml
 ```
+
+## Homework 7
+
+Test `triangle.c` with:
+
+``` sh
+crestc triangle.c
+run_crest ./triangle 10000 -dfs
+```
