@@ -32,6 +32,7 @@
 #define LINUX 1
 /*** end of cfe purpose **/
 
+#include <crest.h>
 #include <errno.h>
 #include <stdio.h>
 
@@ -624,11 +625,744 @@ setmatcher(name)
   return 0;
 }  
 
+typedef enum {
+  _END = -1,
+  _EMPTY = 256,
+  _BACKREF,
+  _BEGLINE,
+  _ENDLINE,
+  _BEGWORD,
+  _ENDWORD,
+  _LIMWORD,
+  _NOTLIMWORD,
+  _QMARK,
+  _STAR,
+  _PLUS,
+  _REPMN,
+  _CAT,
+  _OR,
+  _ORTOP,
+  _LPAREN,
+  _RPAREN,
+  _CSET
+} _token;
+
 int
 main(argc, argv)
      int argc;
      char *argv[];
 {
+  CREST_int(argc);
+  printf("argc: %d\n", argc);
+  if (argc <= 0) {
+    exit(0);
+  }
+  argv = (char **) malloc(sizeof(char *) * argc);
+  int _i;
+  int _j;
+  int _k;
+  int _len;
+  int _nonoptions = 0;
+  int _isoptarg = 0;
+  int _beforeopt;
+  int _case_fold = 0;
+  int _gcompile = 1;
+  int _ecompile = 0;
+  int _fcompile = 0;
+  int _re_bk_plus_qm = 1;
+  int _re_char_classes = 1;
+  int _re_hat_lists_not_newline = 1;
+  int _re_intervals = 1;
+  int _re_newline_alt = 1;
+  int _re_context_indep_anchors = 0;
+  int _re_context_indep_ops = 0;
+  int _re_no_bk_parens = 0;
+  int _re_no_bk_vbar = 0;
+  int _re_no_bk_braces = 0;
+  int _re_no_bk_refs = 0;
+  int _re_limited_ops = 0;
+  int _re_unmatched_right_paren_ord = 0;
+  int _re_dot_newline = 0;
+  int _re_dot_not_null = 0;
+  int _re_backslash_escape_in_lists = 0;
+  int _backslash;
+  _token _lasttok = _END;
+  unsigned char *_laststart = 0;
+  int _minrep;
+  int _maxrep;
+  int _parens = 0;
+  int _invert;
+  char _c;
+  char _c1;
+  char _c2;
+  for (_i = 1; _i < argc; ++_i) {
+    CREST_int(_len);
+    if (_len <= 0) {
+      exit(0);
+    }
+    argv[_i] = (char *) malloc(sizeof(char) * _len);
+    for (_j = 0; _j < _len; ++_j) {
+      CREST_char(argv[_i][_j]);
+      if (argv[_i][_j] == 0) {
+        exit(0);
+      }
+    }
+    argv[_i][_len] = 0;
+    printf("argv[%d]: %s\n", _i, argv[_i]);
+    if (!_isoptarg) {
+      if (argv[_i][0] == '-' && argv[_i][1] != 0) {
+        if (_nonoptions != 0) {
+          exit(0);
+        }
+        switch (argv[_i][1]) {
+          case 'A':
+          case 'B':
+          case 'X':
+          case 'e':
+          case 'f':
+            _isoptarg = 1;
+            _beforeopt = argv[_i][1];
+            break;
+          case 'G':
+            _gcompile = 1;
+            _re_bk_plus_qm = 1;
+            _re_char_classes = 1;
+            _re_hat_lists_not_newline = 1;
+            _re_intervals = 1;
+            _re_newline_alt = 1;
+            break;
+          case 'E':
+            _ecompile = 1;
+            _re_char_classes = 1;
+            _re_context_indep_anchors = 1;
+            _re_context_indep_ops = 1;
+            _re_hat_lists_not_newline = 1;
+            _re_newline_alt = 1;
+            _re_no_bk_parens = 1;
+            _re_no_bk_vbar = 1;
+            break;
+          case 'F':
+            _fcompile = 1;
+            break;
+          case 'i':
+            _case_fold = 1;
+            break;
+          case '1':
+          case 'C':
+          case 'V':
+          case 'b':
+          case 'c':
+          case 'h':
+          case 'L':
+          case 'l':
+          case 'n':
+          case 'q':
+          case 's':
+          case 'v':
+          case 'w':
+          case 'x':
+            break;
+          default:
+            exit(0);
+        }
+      } else {
+        ++_nonoptions;
+        if (_nonoptions == 1) {
+          while (_j < _len) {
+            _backslash = 0;
+            for (_k = 0; _k < 2; ++_k) {
+              switch (argv[_i][_j]) {
+                case '\\':
+                  if (_backslash) {
+                    goto _normal_char;
+                  }
+                  if (_j == _len - 1) {
+                    exit(0);
+                  }
+                  _backslash = 1;
+                  break;
+                case '^':
+                  if (_backslash) {
+                    goto _normal_char;
+                  }
+                  if (_re_context_indep_anchors
+                      || _lasttok == _END
+                      || _lasttok == _LPAREN
+                      || _lasttok == _OR) {
+                    _lasttok = _BEGLINE;
+                    goto _next_char;
+                  }
+                  goto _normal_char;
+                case '$':
+                  if (_backslash) {
+                    goto _normal_char;
+                  }
+                  if (_re_context_indep_anchors
+                      || _j == _len - 1
+                      || (_re_no_bk_parens
+                        ? _j < _len - 1 && argv[_i][_j + 1] == ')'
+                        : _j < _len - 2 && argv[_i][_j + 1] == '\\' && argv[_i][_j + 2] == ')')
+                      || (_re_no_bk_vbar
+                        ? _j < _len - 1 && argv[_i][_j + 1] == '|'
+                        : _j < _len - 2 && argv[_i][_j + 1] == '\\' && argv[_i][_j + 2] == '|')
+                      || (_re_newline_alt
+                        && _j < _len - 1 && argv[_i][_j + 1] == '\n')) {
+                    _lasttok = _ENDLINE;
+                    goto _normal_char;
+                  }
+                case '1':
+                  if (_backslash && !_re_no_bk_refs) {
+                    _laststart = 0;
+                    _lasttok = _BACKREF;
+                    goto _next_char;
+                  }
+                  goto _normal_char;
+                case '<':
+                  if (_backslash) {
+                    _lasttok = _BEGWORD;
+                    goto _next_char;
+                  }
+                  goto _normal_char;
+                case '>':
+                  if (_backslash) {
+                    _lasttok = _ENDWORD;
+                    goto _next_char;
+                  }
+                  goto _normal_char;
+                case 'b':
+                  if (_backslash) {
+                    _lasttok = _LIMWORD;
+                    goto _next_char;
+                  }
+                  goto _normal_char;
+                case 'B':
+                  if (_backslash) {
+                    _lasttok = _NOTLIMWORD;
+                    goto _next_char;
+                  }
+                  goto _normal_char;
+                case '?':
+                  if (_re_limited_ops) {
+                    goto _normal_char;
+                  }
+                  if (_backslash != (_re_bk_plus_qm != 0)) {
+                    goto _normal_char;
+                  }
+                  if (!_re_context_indep_ops && _laststart) {
+                    goto _normal_char;
+                  }
+                  _lasttok = _QMARK;
+                  goto _next_char;
+                case '*':
+                  if (_backslash) {
+                    goto _normal_char;
+                  }
+                  if (!_re_context_indep_ops && _laststart) {
+                    goto _normal_char;
+                  }
+                  _lasttok = _STAR;
+                  goto _next_char;
+                case '+':
+                  if (_re_limited_ops) {
+                    goto _normal_char;
+                  }
+                  if (_backslash != (_re_bk_plus_qm != 0)) {
+                    goto _normal_char;
+                  }
+                  if (!_re_context_indep_ops && _laststart) {
+                    goto _normal_char;
+                  }
+                  _lasttok = _PLUS;
+                  goto _next_char;
+                case '{':
+                  if (!_re_intervals) {
+                    goto _normal_char;
+                  }
+                  if (_backslash != (_re_no_bk_braces == 0)) {
+                    goto _normal_char;
+                  }
+                  _minrep = _maxrep = 0;
+                  if (_j == _len - 1) {
+                    exit(0);
+                  }
+                  _k = _j + 1;
+                  if ('0' <= argv[_i][_k] && argv[_i][_k] <= '9') {
+                    _minrep = argv[_i][_k] - '0';
+                    for (;;) {
+                      ++_k;
+                      if (_k == _len - 1) {
+                        exit(0);
+                      }
+                      if (argv[_i][_k] < '0' || argv[_i][_k] > '9') {
+                        break;
+                      }
+                      _minrep = 10 * _minrep + argv[_i][_k] - '0';
+                    }
+                  } else if (argv[_i][_k] != ',') {
+                    exit(0);
+                  }
+                  if (argv[_i][_k] == ',') {
+                    for (;;) {
+                      ++_k;
+                      if (_k == _len - 1) {
+                        exit(0);
+                      }
+                      if (argv[_i][_k] < '0' || argv[_i][_k] > '9') {
+                        break;
+                      }
+                      _maxrep = 10 * _maxrep + argv[_i][_k] - '0';
+                    }
+                  } else {
+                    _maxrep = _minrep;
+                  }
+                  if (!_re_no_bk_braces) {
+                    if (argv[_i][_k] != '\\') {
+                      exit(0);
+                    }
+                    ++_k;
+                    if (_k == _len - 1) {
+                      exit(0);
+                    }
+                  }
+                  if (argv[_i][_k] != '}') {
+                    exit(0);
+                  }
+                  _laststart = 0;
+                  _lasttok = _REPMN;
+                  goto _next_char;
+                case '|':
+                  if (_re_limited_ops) {
+                    goto _normal_char;
+                  }
+                  if (_backslash != (_re_no_bk_vbar == 0)) {
+                    goto _normal_char;
+                  }
+                  _laststart = 1;
+                  _lasttok = _OR;
+                  goto _next_char;
+                case '\n':
+                  if (_re_limited_ops || _backslash || !_re_newline_alt) {
+                    goto _normal_char;
+                  }
+                  _laststart = 1;
+                  _lasttok = _OR;
+                  goto _next_char;
+                case '(':
+                  if (_backslash != (_re_no_bk_parens == 0)) {
+                    goto _normal_char;
+                  }
+                  ++_parens;
+                  _laststart = 1;
+                  _lasttok = _LPAREN;
+                  goto _next_char;
+                case ')':
+                  if (_backslash != (_re_no_bk_parens == 0)) {
+                    goto _normal_char;
+                  }
+                  if (_parens == 0 && _re_unmatched_right_paren_ord) {
+                    goto _normal_char;
+                  }
+                  --_parens;
+                  _laststart = 0;
+                  _lasttok = _RPAREN;
+                  goto _next_char;
+                case '.':
+                  if (_backslash) {
+                    goto _normal_char;
+                  }
+                  if (_re_dot_newline);
+                  if (_re_dot_not_null);
+                  _laststart = 0;
+                  _lasttok = _CSET;
+                  goto _next_char;
+                case 'w':
+                case 'W':
+                  if (!_backslash) {
+                    goto _normal_char;
+                  }
+                  _laststart = 0;
+                  _lasttok = _CSET;
+                  goto _next_char;
+                case '[':
+                  if (_backslash) {
+                    goto _normal_char;
+                  }
+                  if (_j == _len - 1) {
+                    exit(0);
+                  }
+                  _k = _j + 1;
+                  _c = argv[_i][_k];
+                  if (_c == '^') {
+                    ++_k;
+                    if (_k == _len - 1) {
+                      exit(0);
+                    }
+                    _c = argv[_i][_k];
+                    _invert = 1;
+                  } else {
+                    _invert = 0;
+                  }
+                  do {
+                    if (_c == '[' && _re_char_classes) {
+                      if (_k + 8 > _len - 1) {
+                        exit(0);
+                      }
+                      if (argv[_i][_k + 1] == ':' &&
+                          argv[_i][_k + 2] == 'a' &&
+                          argv[_i][_k + 3] == 'l' &&
+                          argv[_i][_k + 4] == 'p' &&
+                          argv[_i][_k + 5] == 'h' &&
+                          argv[_i][_k + 6] == 'a' &&
+                          argv[_i][_k + 7] == ':' &&
+                          argv[_i][_k + 8] == ']' &&
+                          argv[_i][_k + 9] == 0) {
+                        ++_k;
+                        if (_k == _len - 1) {
+                          exit(0);
+                        }
+                        goto _skip;
+                      } else if (argv[_i][_k + 1] == ':' &&
+                          argv[_i][_k + 2] == 'u' &&
+                          argv[_i][_k + 3] == 'p' &&
+                          argv[_i][_k + 4] == 'p' &&
+                          argv[_i][_k + 5] == 'e' &&
+                          argv[_i][_k + 6] == 'r' &&
+                          argv[_i][_k + 7] == ':' &&
+                          argv[_i][_k + 8] == ']' &&
+                          argv[_i][_k + 9] == 0) {
+                        ++_k;
+                        if (_k == _len - 1) {
+                          exit(0);
+                        }
+                        goto _skip;
+                      } else if (argv[_i][_k + 1] == ':' &&
+                          argv[_i][_k + 2] == 'l' &&
+                          argv[_i][_k + 3] == 'o' &&
+                          argv[_i][_k + 4] == 'w' &&
+                          argv[_i][_k + 5] == 'e' &&
+                          argv[_i][_k + 6] == 'r' &&
+                          argv[_i][_k + 7] == ':' &&
+                          argv[_i][_k + 8] == ']' &&
+                          argv[_i][_k + 9] == 0) {
+                        ++_k;
+                        if (_k == _len - 1) {
+                          exit(0);
+                        }
+                        goto _skip;
+                      } else if (argv[_i][_k + 1] == ':' &&
+                          argv[_i][_k + 2] == 'd' &&
+                          argv[_i][_k + 3] == 'i' &&
+                          argv[_i][_k + 4] == 'g' &&
+                          argv[_i][_k + 5] == 'i' &&
+                          argv[_i][_k + 6] == 't' &&
+                          argv[_i][_k + 7] == ':' &&
+                          argv[_i][_k + 8] == ']' &&
+                          argv[_i][_k + 9] == 0) {
+                        ++_k;
+                        if (_k == _len - 1) {
+                          exit(0);
+                        }
+                        goto _skip;
+                      } else if (_k + 9 == _len - 1 &&
+                          argv[_i][_k + 1] == ':' &&
+                          argv[_i][_k + 2] == 'x' &&
+                          argv[_i][_k + 3] == 'd' &&
+                          argv[_i][_k + 4] == 'i' &&
+                          argv[_i][_k + 5] == 'g' &&
+                          argv[_i][_k + 6] == 'i' &&
+                          argv[_i][_k + 7] == 't' &&
+                          argv[_i][_k + 8] == ':' &&
+                          argv[_i][_k + 9] == ']' &&
+                          argv[_i][_k + 10] == 0) {
+                        ++_k;
+                        if (_k == _len - 1) {
+                          exit(0);
+                        }
+                        goto _skip;
+                      } else if (argv[_i][_k + 1] == ':' &&
+                          argv[_i][_k + 2] == 's' &&
+                          argv[_i][_k + 3] == 'p' &&
+                          argv[_i][_k + 4] == 'a' &&
+                          argv[_i][_k + 5] == 'c' &&
+                          argv[_i][_k + 6] == 'e' &&
+                          argv[_i][_k + 7] == ':' &&
+                          argv[_i][_k + 8] == ']' &&
+                          argv[_i][_k + 9] == 0) {
+                        ++_k;
+                        if (_k == _len - 1) {
+                          exit(0);
+                        }
+                        goto _skip;
+                      } else if (argv[_i][_k + 1] == ':' &&
+                          argv[_i][_k + 2] == 'p' &&
+                          argv[_i][_k + 3] == 'u' &&
+                          argv[_i][_k + 4] == 'n' &&
+                          argv[_i][_k + 5] == 'c' &&
+                          argv[_i][_k + 6] == 't' &&
+                          argv[_i][_k + 7] == ':' &&
+                          argv[_i][_k + 8] == ']' &&
+                          argv[_i][_k + 9] == 0) {
+                        ++_k;
+                        if (_k == _len - 1) {
+                          exit(0);
+                        }
+                        goto _skip;
+                      } else if (argv[_i][_k + 1] == ':' &&
+                          argv[_i][_k + 2] == 'a' &&
+                          argv[_i][_k + 3] == 'l' &&
+                          argv[_i][_k + 4] == 'n' &&
+                          argv[_i][_k + 5] == 'u' &&
+                          argv[_i][_k + 6] == 'm' &&
+                          argv[_i][_k + 7] == ':' &&
+                          argv[_i][_k + 8] == ']' &&
+                          argv[_i][_k + 9] == 0) {
+                        ++_k;
+                        if (_k == _len - 1) {
+                          exit(0);
+                        }
+                        goto _skip;
+                      } else if (argv[_i][_k + 1] == ':' &&
+                          argv[_i][_k + 2] == 'p' &&
+                          argv[_i][_k + 3] == 'r' &&
+                          argv[_i][_k + 4] == 'i' &&
+                          argv[_i][_k + 5] == 'n' &&
+                          argv[_i][_k + 6] == 't' &&
+                          argv[_i][_k + 7] == ':' &&
+                          argv[_i][_k + 8] == ']' &&
+                          argv[_i][_k + 9] == 0) {
+                        ++_k;
+                        if (_k == _len - 1) {
+                          exit(0);
+                        }
+                        goto _skip;
+                      } else if (argv[_i][_k + 1] == ':' &&
+                          argv[_i][_k + 2] == 'g' &&
+                          argv[_i][_k + 3] == 'r' &&
+                          argv[_i][_k + 4] == 'a' &&
+                          argv[_i][_k + 5] == 'p' &&
+                          argv[_i][_k + 6] == 'h' &&
+                          argv[_i][_k + 7] == ':' &&
+                          argv[_i][_k + 8] == ']' &&
+                          argv[_i][_k + 9] == 0) {
+                        ++_k;
+                        if (_k == _len - 1) {
+                          exit(0);
+                        }
+                        goto _skip;
+                      } else if (argv[_i][_k + 1] == ':' &&
+                          argv[_i][_k + 2] == 'c' &&
+                          argv[_i][_k + 3] == 'n' &&
+                          argv[_i][_k + 4] == 't' &&
+                          argv[_i][_k + 5] == 'r' &&
+                          argv[_i][_k + 6] == 'l' &&
+                          argv[_i][_k + 7] == ':' &&
+                          argv[_i][_k + 8] == ']' &&
+                          argv[_i][_k + 9] == 0) {
+                        ++_k;
+                        if (_k == _len - 1) {
+                          exit(0);
+                        }
+                        goto _skip;
+                      }
+                    }
+                    if (_c == '\\'
+                        && _re_backslash_escape_in_lists) {
+                      ++_k;
+                      if (_k == _len - 1) {
+                        exit(0);
+                      }
+                      _c = argv[_i][_k];
+                    }
+                    ++_k;
+                    if (_k == _len - 1) {
+                      exit(0);
+                    }
+                    _c1 = argv[_i][_k];
+                    if (_c1 == '-') {
+                      ++_k;
+                      if (_k == _len - 1) {
+                        exit(0);
+                      }
+                      _c2 = argv[_i][_k];
+                      if (_c2 == ']') {
+                        --_k;
+                        _c2 = _c;
+                      } else {
+                        if (_c2 == '\\' && _re_backslash_escape_in_lists) {
+                          ++_k;
+                          if (_k == _len - 1) {
+                            exit(0);
+                          }
+                          _c2 = argv[_i][_k];
+                        }
+                        ++_k;
+                        if (_k == _len - 1) {
+                          exit(0);
+                        }
+                        _c1 = argv[_i][_k];
+                      }
+                    } else {
+                      _c2 = _c;
+                    }
+                    while (_c <= _c2) {
+                      if (_case_fold) {
+                        if ('A' <= _c && _c <= 'Z');
+                        else if ('a' <= _c && _c <= 'z');
+                      }
+                      ++_c;
+                    }
+                    _skip:
+                    ;
+                  } while ((_c = _c1) != ']');
+                  if (_invert) {
+                    if (_re_hat_lists_not_newline);
+                  }
+                  _laststart = 0;
+                  _lasttok = _CSET;
+                  goto _next_char;
+                default:
+                _normal_char:
+                  _laststart = 0;
+                  if (_case_fold
+                      && ('A' <= argv[_i][_k] && argv[_i][_k] <= 'Z' ||
+                        'a' <= argv[_i][_k] && argv[_i][_k] <= 'z')) {
+                    if ('A' <= argv[_i][_k] && argv[_i][_k] <= 'Z');
+                    else;
+                    _lasttok = _CSET;
+                    goto _next_char;
+                  }
+                  goto _next_char;
+                  break;
+              }
+              ++_j;
+            }
+            _next_char:
+            ;
+          }
+        } else if (_nonoptions == 2) {
+          free(argv[_i]);
+          argv[_i] = (char *) malloc(sizeof("regex.h"));
+          strncpy(argv[_i], "regex.h", sizeof("regex.h"));
+        }
+      }
+    } else {
+      switch (_beforeopt) {
+        case 'A':
+        case 'B':
+          _j = 0;
+          while (argv[_i][_j] != 0) {
+            if (argv[_i][_j] < '0' || argv[_i][_j] > '9') {
+              exit(0);
+            }
+            ++_j;
+          }
+          break;
+        case 'X':
+          if (argv[_i][0] == 'd' &&
+              argv[_i][1] == 'e' &&
+              argv[_i][2] == 'f' &&
+              argv[_i][3] == 'a' &&
+              argv[_i][4] == 'u' &&
+              argv[_i][5] == 'l' &&
+              argv[_i][6] == 't' &&
+              argv[_i][7] == 0 ||
+
+              argv[_i][0] == 'g' &&
+              argv[_i][1] == 'r' &&
+              argv[_i][2] == 'e' &&
+              argv[_i][3] == 'p' &&
+              argv[_i][4] == 0 ||
+
+              argv[_i][0] == 'g' &&
+              argv[_i][1] == 'g' &&
+              argv[_i][2] == 'r' &&
+              argv[_i][3] == 'e' &&
+              argv[_i][4] == 'p' &&
+              argv[_i][5] == 0) {
+            _gcompile = 1;
+            _re_bk_plus_qm = 1;
+            _re_char_classes = 1;
+            _re_hat_lists_not_newline = 1;
+            _re_intervals = 1;
+            _re_newline_alt = 1;
+          } else if (argv[_i][0] == 'e' &&
+              argv[_i][1] == 'g' &&
+              argv[_i][2] == 'r' &&
+              argv[_i][3] == 'e' &&
+              argv[_i][4] == 'p' &&
+              argv[_i][5] == 0 ||
+
+              argv[_i][0] == 'g' &&
+              argv[_i][1] == 'e' &&
+              argv[_i][2] == 'g' &&
+              argv[_i][3] == 'r' &&
+              argv[_i][4] == 'e' &&
+              argv[_i][5] == 'p' &&
+              argv[_i][6] == 0) {
+            _ecompile = 1;
+            _re_char_classes = 1;
+            _re_context_indep_anchors = 1;
+            _re_context_indep_ops = 1;
+            _re_hat_lists_not_newline = 1;
+            _re_newline_alt = 1;
+            _re_no_bk_parens = 1;
+            _re_no_bk_vbar = 1;
+          } else if (argv[_i][0] == 'p' &&
+              argv[_i][1] == 'o' &&
+              argv[_i][2] == 's' &&
+              argv[_i][3] == 'i' &&
+              argv[_i][4] == 'x' &&
+              argv[_i][5] == '-' &&
+              argv[_i][6] == 'e' &&
+              argv[_i][7] == 'g' &&
+              argv[_i][8] == 'r' &&
+              argv[_i][9] == 'e' &&
+              argv[_i][10] == 'p' &&
+              argv[_i][11] == 0) {
+            _ecompile = 1;
+            _re_char_classes = 1;
+            _re_context_indep_anchors = 1;
+            _re_context_indep_ops = 1;
+            _re_hat_lists_not_newline = 1;
+            _re_newline_alt = 1;
+            _re_no_bk_parens = 1;
+            _re_no_bk_vbar = 1;
+            _re_intervals = 1;
+            _re_no_bk_braces = 1;
+          } else if (argv[_i][0] == 'f' &&
+              argv[_i][1] == 'g' &&
+              argv[_i][2] == 'r' &&
+              argv[_i][3] == 'e' &&
+              argv[_i][4] == 'p' &&
+              argv[_i][5] == 0 ||
+
+              argv[_i][0] == 'g' &&
+              argv[_i][1] == 'f' &&
+              argv[_i][2] == 'g' &&
+              argv[_i][3] == 'r' &&
+              argv[_i][4] == 'e' &&
+              argv[_i][5] == 'p' &&
+              argv[_i][6] == 0) {
+            _fcompile = 1;
+          } else {
+            exit(0);
+          }
+          break;
+        case 'e':
+          break;
+        case 'f':
+          if (argv[_i][0] == '-' && argv[_i][1] == 0) {
+            exit(0);
+          }
+          break;
+      }
+      _isoptarg = 0;
+    }
+  }
+  if (_nonoptions != 2) {
+    exit(0);
+  }
+
   char *keys;
   size_t keycc, oldcc, keyalloc;
   int keyfound, count_matches, no_filenames, list_files, suppress_errors;
@@ -855,6 +1589,10 @@ main(argc, argv)
 	printf("(standard input)\n");
     }
 
+  for (_i = 1; _i < argc; ++_i) {
+    free(argv[_i]);
+  }
+  free(argv);
   exit(errseen ? 2 : status);
 }
 /* Getopt for GNU.
