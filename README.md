@@ -187,3 +187,26 @@ See the input and execution with:
 cat input
 print_execution
 ```
+
+Generate test cases for `grep.c` with:
+
+``` sh
+crestc grep.c
+run_crest ./grep 10000 -dfs
+run_crest ./grep 10000 -cfg
+run_crest ./grep 10000 -random
+run_crest ./grep 10000 -random_input
+```
+
+Test `grep_orig.c` with generated input:
+
+``` sh
+gcc -coverage grep_orig.c -o grep_orig
+python input.py
+```
+
+View coverage with `gcov`:
+
+``` sh
+gcov -b grep_orig.c
+```
